@@ -1,0 +1,1538 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101c35">
+<title>S-CHATE Global Voices Chat</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#edf2f8;color:#17243c}
+header{background:#101c35;color:white;padding:18px;display:flex;justify-content:space-between;align-items:center}
+.logo{font-size:25px;font-weight:bold;color:#55b5ff}
+.tag{font-size:10px;letter-spacing:2px;color:#b8d9ff}
+select{padding:9px;border-radius:9px;border:0;background:#243958;color:white}
+.page{padding:16px;padding-bottom:100px}
+.hero{background:linear-gradient(135deg,#10264e,#246bc5);color:white;padding:23px;border-radius:18px;margin-bottom:20px}
+.hero h2{font-size:24px;margin:5px 0}
+.hero p{color:#d5e6ff}
+.section{font-size:18px;font-weight:bold;margin:20px 0 12px}
+.item{display:flex;align-items:center;background:white;padding:14px;border-radius:13px;margin-bottom:10px;gap:12px}
+.avatar{width:48px;height:48px;border-radius:50%;background:#d9eaff;display:flex;align-items:center;justify-content:center;font-size:23px;flex-shrink:0;object-fit:cover}
+.item small{color:#8491a5}
+.online{color:#16a66a!important}
+.action{background:#2168ce;color:white;padding:11px 16px;border:0;border-radius:9px;font-weight:bold;cursor:pointer}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:white;padding:10px 1px;box-shadow:0 -3px 15px #0001;z-index:10}
+nav button{border:0;background:none;color:#8491a5;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:19%}
+nav button span{font-size:21px}
+nav button.active{color:#2168ce;font-weight:bold}
+.hidden{display:none!important}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+/* AUTH */
+#authScreen{min-height:100vh;padding:25px 18px;display:flex;align-items:center;justify-content:center;background:linear-gradient(145deg,#101c35,#1d559d)}
+.auth-card{width:100%;max-width:420px;background:white;padding:25px;border-radius:20px;box-shadow:0 12px 35px #0003}
+.auth-logo{text-align:center;margin-bottom:22px}
+.auth-logo h1{color:#2168ce;margin:0;font-size:30px}
+.auth-logo p{font-size:11px;letter-spacing:2px;color:#8491a5}
+.auth-card input{width:100%;padding:14px;margin:8px 0;border:1px solid #d8e0eb;border-radius:10px;font-size:15px}
+.auth-card .action{width:100%;padding:14px;margin-top:12px}
+.switch{text-align:center;margin-top:18px;font-size:14px}
+.switch a{color:#2168ce;font-weight:bold;cursor:pointer}
+#authMessage{margin-top:12px;font-size:13px;text-align:center;line-height:1.5}
+.logout{background:#e84545;color:white;padding:11px 16px;border:0;border-radius:9px;font-weight:bold}
+
+/* PROFILE */
+.profile-card{background:white;padding:18px;border-radius:16px;margin-bottom:15px}
+.profile-photo-box{display:flex;flex-direction:column;align-items:center;gap:12px;padding:15px}
+.profile-photo{width:115px;height:115px;border-radius:50%;background:#d9eaff;object-fit:cover;border:4px solid #d9eaff}
+.profile-input{width:100%;padding:13px;margin:7px 0 14px;border:1px solid #d8e0eb;border-radius:9px;font-size:15px;background:white}
+.profile-input:disabled{background:#f1f4f8;color:#64748b;opacity:1}
+.profile-label{display:block;font-size:13px;font-weight:bold;color:#34445e}
+.profile-save,.profile-edit{width:100%;padding:14px;border-radius:10px;font-weight:bold;font-size:15px;cursor:pointer}
+.profile-save{border:0;background:#2168ce;color:white}
+.profile-edit{border:1px solid #2168ce;background:white;color:#2168ce;margin-bottom:12px}
+.profile-status{font-size:13px;margin-top:12px;text-align:center;line-height:1.5}
+.profile-help{font-size:12px;color:#8491a5;text-align:center;line-height:1.5}
+
+/* MEMBERS */
+.search-box{width:100%;padding:14px;border:1px solid #d8e0eb;border-radius:12px;font-size:15px;margin:5px 0 14px;background:white}
+.member-card{background:white;padding:14px;border-radius:14px;margin-bottom:11px;display:flex;align-items:center;gap:12px}
+.member-photo{width:58px;height:58px;border-radius:50%;object-fit:cover;background:#d9eaff;flex-shrink:0}
+.member-info{flex:1;min-width:0}
+.member-info b{font-size:15px}
+.member-info small{display:block;color:#8491a5;margin-top:5px;overflow-wrap:anywhere}
+.view-btn{border:0;background:#e8f1ff;color:#2168ce;padding:9px 11px;border-radius:8px;font-weight:bold}
+.member-count{font-size:12px;color:#8491a5;margin-bottom:12px}
+.empty-state{text-align:center;background:white;padding:25px;border-radius:14px;color:#8491a5;line-height:1.6}
+.member-detail{background:white;border-radius:16px;padding:20px;margin-top:15px;text-align:center}
+.member-detail-photo{width:115px;height:115px;border-radius:50%;object-fit:cover;background:#d9eaff;border:4px solid #e1edff}
+.detail-info{text-align:left;margin-top:20px}
+.detail-row{padding:12px 0;border-bottom:1px solid #edf1f6;font-size:14px;overflow-wrap:anywhere}
+.detail-row b{display:block;color:#8491a5;font-size:12px;margin-bottom:5px}
+.back-btn{width:100%;padding:12px;background:#edf3fc;color:#2168ce;border:0;border-radius:9px;font-weight:bold;margin-top:15px}
+.privacy-note{background:#e9f5ff;color:#315b86;padding:12px;border-radius:10px;font-size:12px;line-height:1.5;margin:12px 0}
+
+/* CHAT */
+.chat-layout{display:flex;flex-direction:column;gap:12px}
+.chat-panel{background:white;border-radius:15px;overflow:hidden}
+.chat-panel-title{padding:14px;background:#f6f9fd;border-bottom:1px solid #e7edf5;font-weight:bold}
+.conversation-list{max-height:380px;overflow-y:auto}
+.conversation-item{display:flex;align-items:center;gap:11px;padding:13px;border-bottom:1px solid #edf1f6;cursor:pointer}
+.conversation-item:active{background:#f0f6ff}
+.conversation-item img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#e1edff}
+.conversation-info{flex:1;min-width:0}
+.conversation-info b{display:block;font-size:14px}
+.conversation-info small{display:block;color:#8491a5;margin-top:5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chat-window{display:flex;flex-direction:column;min-height:440px}
+.chat-header{display:flex;align-items:center;gap:10px;padding:12px;background:#f6f9fd;border-bottom:1px solid #e7edf5}
+.chat-header img{width:42px;height:42px;border-radius:50%;object-fit:cover}
+.chat-header-info{flex:1}
+.chat-header-info b{display:block}
+.chat-header-info small{color:#16a66a;font-size:11px}
+.chat-back{border:0;background:#e8f1ff;color:#2168ce;padding:9px 12px;border-radius:8px;font-weight:bold}
+.message-list{flex:1;min-height:260px;max-height:430px;overflow-y:auto;padding:13px;background:#f7f9fc}
+.message-row{display:flex;margin:9px 0}
+.message-row.mine{justify-content:flex-end}
+.message-bubble{max-width:84%;padding:10px 12px;border-radius:14px;background:white;box-shadow:0 1px 4px #0001;overflow-wrap:anywhere}
+.message-row.mine .message-bubble{background:#dcecff}
+.message-time{font-size:10px;color:#8491a5;text-align:right;margin-top:6px}
+.message-media{display:block;max-width:100%;max-height:260px;border-radius:10px;margin-top:5px}
+.message-media video{width:100%}
+.message-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:14px}
+.gift-message{text-align:center;font-size:19px;padding:8px}
+.gift-message b{display:block;font-size:13px;margin-top:5px}
+.chat-compose{padding:12px;border-top:1px solid #e7edf5;background:white}
+.chat-input-row{display:flex;gap:7px}
+.chat-input{flex:1;min-width:0;padding:12px;border:1px solid #d8e0eb;border-radius:22px;font-size:14px}
+.send-btn{border:0;border-radius:50%;width:44px;background:#2168ce;color:white;font-size:19px}
+.chat-tools{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.tool-btn{border:0;background:#edf3fc;color:#24558e;padding:9px 11px;border-radius:9px;font-size:13px}
+.tool-btn.recording{background:#ffe5e5;color:#d12b2b}
+.emoji-panel,.gift-panel{display:flex;flex-wrap:wrap;gap:8px;padding:10px;background:#f6f9fd;border-radius:10px;margin-top:9px}
+.emoji-choice,.gift-choice{border:1px solid #dce5f0;background:white;border-radius:10px;padding:9px;font-size:22px}
+.gift-choice{font-size:13px}
+.gift-choice span{font-size:24px;display:block;margin-bottom:4px}
+.recording-status{font-size:12px;color:#d12b2b;margin-top:8px;min-height:16px}
+.chat-note{font-size:11px;color:#8491a5;line-height:1.5;margin-top:8px}
+
+/* S-CHATE compact always-visible private chat feature strip */
+.chat-feature-strip{display:flex;align-items:stretch;gap:5px;width:100%;overflow-x:auto;overflow-y:hidden;padding:8px 2px 10px;margin-top:7px;border-top:1px solid #edf1f6;border-bottom:1px solid #edf1f6;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.chat-feature{flex:0 0 55px;min-width:55px;min-height:55px;padding:5px 2px;border:1px solid transparent;border-radius:9px;background:#f5f8fd;color:#34445e;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+.chat-feature:active{background:#e4efff;border-color:#bfd7f7}
+.chat-feature .feature-icon{font-size:19px;line-height:22px}
+.chat-feature .feature-label{font-size:9px;line-height:11px;text-align:center;white-space:normal;overflow-wrap:anywhere;font-weight:600}
+.chat-feature.ai-feature{background:#edf5ff;color:#1556a2;border-color:#cfe2fb}
+.attachment-menu{display:none!important}
+.translator-panel{margin-top:10px;padding:14px;border:1px solid #cfe0f7;border-radius:13px;background:#f6faff}
+.translator-title{font-weight:bold;color:#174f9c}.translator-note{font-size:11px;color:#718198;line-height:1.5;margin:8px 0}
+.translator-panel>label{display:block;font-size:12px;font-weight:bold;margin:9px 0 5px;color:#34445e}
+.voice-typing-box{margin:12px 0;padding:12px;border:1px solid #cbdcf3;border-radius:11px;background:#fff}.voice-typing-box b{font-size:13px;color:#174f9c}.voice-typing-box .action{width:100%;margin-top:5px}.voice-typing-box .action.listening{background:#b42318;color:#fff}
+.translator-select{width:100%;padding:10px;border:1px solid #d8e0eb;border-radius:9px;background:white;color:#17243c}
+.translator-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;font-size:12px}.translator-modes label{display:flex;align-items:center;gap:5px}
+
+</style>
+</head>
+
+<body>
+
+<section id="authScreen">
+ <div class="auth-card">
+  <div class="auth-logo">
+   <h1>S-CHATE 🌍</h1>
+   <p>GLOBAL VOICES CHAT</p>
+  </div>
+
+  <div id="loginForm">
+   <h2>Welcome Back!</h2>
+   <p>Login to continue to S-CHATE.</p>
+   <input type="email" id="loginEmail" placeholder="Email Address" autocomplete="email">
+   <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+   <button class="action" id="loginBtn" onclick="loginUser()">Login</button>
+   <div class="switch">New user? <a onclick="showSignup()">Create Account</a></div>
+  </div>
+
+  <div id="signupForm" class="hidden">
+   <h2>Create Account</h2>
+   <p>Join the global S-CHATE community.</p>
+   <input type="text" id="signupName" placeholder="Your Full Name" autocomplete="name">
+   <input type="email" id="signupEmail" placeholder="Email Address" autocomplete="email">
+   <input type="password" id="signupPassword" placeholder="Create Password (minimum 6 characters)" autocomplete="new-password">
+   <button class="action" id="signupBtn" onclick="signupUser()">Create Account</button>
+   <div class="switch">Already registered? <a onclick="showLogin()">Login</a></div>
+  </div>
+  <div id="authMessage"></div>
+ </div>
+</section>
+
+<div id="mainApp" class="hidden">
+<header>
+ <div>
+  <div class="logo">S-CHATE</div>
+  <div class="tag">GLOBAL VOICES CHAT</div>
+ </div>
+ <select id="language" onchange="changeLanguage()">
+  <option value="en">English</option>
+  <option value="hi">हिन्दी</option>
+ </select>
+</header>
+
+<main>
+
+<section id="home" class="page">
+ <div class="hero">
+  <h2 id="welcome">Welcome to S-CHATE 🌍</h2>
+  <p id="subtitle">Connect with people around the world.</p>
+  <button class="action" onclick="openTab('party')">Explore Global Rooms</button>
+ </div>
+ <div class="section">🌍 Global Community</div>
+ <div class="item"><div class="avatar">🌎</div><div><b>Worldwide Community</b><br><small>Meet people from different countries</small></div></div>
+ <div class="section">👥 Discover Members</div>
+ <div class="item">
+  <div class="avatar">👥</div>
+  <div style="flex:1"><b>Meet Global Members</b><br><small>Explore member profiles from around the world</small></div>
+  <button class="action" onclick="openTab('members')">Explore</button>
+ </div>
+ <div class="section">🔥 Popular Rooms</div>
+ <div class="item"><div class="avatar">🎤</div><div><b>Global Voice Room</b><br><small>Discover voice conversations</small></div></div>
+ <div class="item"><div class="avatar">💬</div><div><b>Friends Chat</b><br><small>Connect and make friends</small></div></div>
+</section>
+
+<section id="party" class="page hidden">
+ <div class="section">🎤 Global Voice Rooms</div>
+ <div class="item"><div class="avatar">🌍</div><div><b>International Room</b><br><small>Global conversations</small></div></div>
+ <div class="item"><div class="avatar">🇮🇳</div><div><b>India Voice Room</b><br><small>Hindi and English</small></div></div>
+ <div class="item"><div class="avatar">🎵</div><div><b>Music & Friends</b><br><small>Meet new people</small></div></div>
+</section>
+
+<section id="members" class="page hidden">
+ <div class="section">🌍 Global Members</div>
+ <p style="color:#8491a5;font-size:13px">Discover people who have joined S-CHATE.</p>
+ <input id="memberSearch" class="search-box" type="search"
+  placeholder="🔍 Search name, city or country..." oninput="filterMembers()">
+ <div id="memberCount" class="member-count">Loading members...</div>
+ <div id="membersList"></div>
+ <div id="memberDetail" class="member-detail hidden"></div>
+ <button id="refreshMembersBtn" class="action" style="width:100%;margin-top:10px" onclick="loadMembers()">↻ Refresh Members</button>
+ <div class="privacy-note">🛡️ Only public profile details are shown here. Private contact information is not displayed.</div>
+</section>
+
+<!-- PRIVATE CHAT -->
+<section id="chat" class="page hidden">
+ <div class="section">💬 Private Messages</div>
+
+ <div id="chatListPanel" class="chat-panel">
+  <div class="chat-panel-title">Your Conversations</div>
+  <div id="conversationList" class="conversation-list">
+   <div class="empty-state">Loading conversations...</div>
+  </div>
+  <div style="padding:12px">
+   <button class="action" style="width:100%" onclick="loadConversations()">↻ Refresh Chats</button>
+  </div>
+ </div>
+
+ <div id="chatWindow" class="chat-panel hidden">
+  <div class="chat-header">
+   <button class="chat-back" onclick="closeChatWindow()">←</button>
+   <img id="chatOtherPhoto" src="https://placehold.co/100x100/e1edff/2168ce?text=User" alt="Member">
+   <div class="chat-header-info">
+    <b id="chatOtherName">Member</b>
+    <small>● Private Conversation</small>
+   </div>
+  </div>
+
+  <div id="messageList" class="message-list">
+   <div class="empty-state">Start your conversation.</div>
+  </div>
+
+  <div class="chat-compose">
+   <div class="chat-input-row">
+    <input id="messageInput" class="chat-input" type="text"
+     maxlength="4000" placeholder="Write a message...">
+    <button class="send-btn" id="sendMessageBtn" onclick="sendTextMessage()">➤</button>
+   </div>
+
+   <div class="chat-feature-strip" role="toolbar" aria-label="Private chat features">
+    <button class="chat-feature" type="button" aria-label="Gallery" onclick="document.getElementById('chatPhotoInput').click()"><span class="feature-icon">🖼️</span><span class="feature-label">Gallery</span></button>
+    <button class="chat-feature" type="button" aria-label="Camera" onclick="document.getElementById('cameraInput').click()"><span class="feature-icon">📸</span><span class="feature-label">Camera</span></button>
+    <button class="chat-feature" type="button" aria-label="Voice Recording" onclick="toggleVoiceRecording()"><span class="feature-icon">🎙️</span><span class="feature-label">Voice</span></button>
+    <button class="chat-feature" type="button" aria-label="Emoji" onclick="toggleEmojiPanel()"><span class="feature-icon">😊</span><span class="feature-label">Emoji</span></button>
+    <button class="chat-feature" type="button" aria-label="Gifting" onclick="toggleGiftPanel()"><span class="feature-icon">🎁</span><span class="feature-label">Gifting</span></button>
+    <button class="chat-feature" type="button" aria-label="Live Location" onclick="shareCurrentLocation()"><span class="feature-icon">📍</span><span class="feature-label">Live Location</span></button>
+    <button class="chat-feature" type="button" aria-label="Request Location" onclick="requestOtherLocation()"><span class="feature-icon">🧭</span><span class="feature-label">Request Location</span></button>
+    <button class="chat-feature" type="button" aria-label="Video Calling" onclick="startCall('video')"><span class="feature-icon">📹</span><span class="feature-label">Video Call</span></button>
+    <button class="chat-feature" type="button" aria-label="Voice Calling" onclick="startCall('voice')"><span class="feature-icon">📞</span><span class="feature-label">Voice Call</span></button>
+    <button class="chat-feature ai-feature" type="button" aria-label="AI Translator" onclick="toggleTranslatorPanel()"><span class="feature-icon">🌐</span><span class="feature-label">AI Translate</span></button>
+   </div>
+
+   <input type="file" id="chatPhotoInput" accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime" class="hidden" multiple>
+   <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden">
+   <button class="tool-btn hidden" id="voiceRecordBtn" type="button" onclick="toggleVoiceRecording()">🎤 Voice</button>
+   <button class="tool-btn hidden" id="videoRecordBtn" type="button" onclick="toggleVideoRecording()">🎥 Video</button>
+
+   <div id="translatorPanel" class="translator-panel hidden">
+    <div class="translator-title">🌐 S-CHATE AI Translator</div>
+    <p class="translator-note">Choose your languages and translation mode. Live AI translation needs the secure translation service to be connected.</p>
+    <label>Translate from</label>
+    <select id="translateFrom" class="translator-select"><option value="auto">Auto detect</option><option value="hi">Hindi</option><option value="en">English</option><option value="ur">Urdu</option><option value="ar">Arabic</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="fr">French</option><option value="de">German</option><option value="es">Spanish</option><option value="pt">Portuguese</option><option value="ru">Russian</option><option value="bn">Bengali</option><option value="pa">Punjabi</option><option value="it">Italian</option><option value="ko">Korean</option><option value="tr">Turkish</option></select>
+    <label>Translate to</label>
+    <select id="translateTo" class="translator-select"><option value="hi">Hindi</option><option value="en">English</option><option value="ur">Urdu</option><option value="ar">Arabic</option><option value="zh">Chinese</option><option value="ja">Japanese</option><option value="fr">French</option><option value="de">German</option><option value="es">Spanish</option><option value="pt">Portuguese</option><option value="ru">Russian</option><option value="bn">Bengali</option><option value="pa">Punjabi</option><option value="it">Italian</option><option value="ko">Korean</option><option value="tr">Turkish</option></select>
+    <div class="translator-modes"><label><input type="checkbox" checked id="translateTextOn"> Text</label><label><input type="checkbox" id="translateVoiceOn"> Voice</label><label><input type="checkbox" id="translateVoiceCallOn"> Voice call</label><label><input type="checkbox" id="translateVideoCallOn"> Video call</label></div>
+    <div class="voice-typing-box" style="margin:12px 0;padding:12px;border:1px solid #d8e6f7;border-radius:12px;background:#fff">
+     <b>✍️ AI Text Translator</b>
+     <p class="translator-note">अपना संदेश लिखें या नीचे Voice Typing से बोलें, फिर चुनी हुई भाषा में अनुवाद करें।</p>
+     <textarea id="aiTranslateInput" rows="3" maxlength="4000" placeholder="यहाँ अपना संदेश लिखें…" style="width:100%;padding:11px;border:1px solid #d8e0eb;border-radius:9px;resize:vertical;font:inherit"></textarea>
+     <button class="action" id="runTextTranslationBtn" type="button" onclick="runAITextTranslation()" style="margin-top:8px;width:100%">🌐 Translate message</button>
+     <div id="aiTranslateResultBox" class="translator-note" style="display:none;margin-top:10px;padding:10px;background:#f2f7ff;border-radius:9px;white-space:pre-wrap">
+      <b>Translated message</b>
+      <div id="aiTranslateResult" style="margin:7px 0;color:#17243c"></div>
+      <button class="action" type="button" onclick="useTranslatedMessage()">Use in chat message</button>
+     </div>
+    </div>
+    <div class="voice-typing-box">
+     <b>🎙️ AI Voice Text Typing</b>
+     <p class="translator-note">बोलकर संदेश लिखें। आपकी आवाज़ टेक्स्ट में बदलेगी और मैसेज बॉक्स में आएगी। भेजने से पहले आप उसे सुधार सकते हैं।</p>
+     <button class="action" id="voiceTypingBtn" type="button" onclick="toggleVoiceTyping()">🎤 बोलकर टाइप करें</button>
+     <div id="voiceTypingStatus" class="translator-note" aria-live="polite">भाषा ऊपर “Translate from” में चुनें।</div>
+    </div>
+    <button class="action" type="button" onclick="saveTranslatorPreferences()">Save my preferences</button>
+    <div id="translatorStatus" class="translator-note">✅ Gemini AI Translator connected. Choose languages, enter a message and translate.</div>
+   </div>
+
+   <div id="emojiPanel" class="emoji-panel hidden">
+    <button class="emoji-choice" onclick="sendEmoji('😊')">😊</button>
+    <button class="emoji-choice" onclick="sendEmoji('❤️')">❤️</button>
+    <button class="emoji-choice" onclick="sendEmoji('😂')">😂</button>
+    <button class="emoji-choice" onclick="sendEmoji('😍')">😍</button>
+    <button class="emoji-choice" onclick="sendEmoji('😘')">😘</button>
+    <button class="emoji-choice" onclick="sendEmoji('👍')">👍</button>
+    <button class="emoji-choice" onclick="sendEmoji('👏')">👏</button>
+    <button class="emoji-choice" onclick="sendEmoji('🔥')">🔥</button>
+    <button class="emoji-choice" onclick="sendEmoji('🥰')">🥰</button>
+    <button class="emoji-choice" onclick="sendEmoji('🙏')">🙏</button>
+    <button class="emoji-choice" onclick="sendEmoji('🤣')">🤣</button><button class="emoji-choice" onclick="sendEmoji('😭')">😭</button>
+    <button class="emoji-choice" onclick="sendEmoji('😘')">😘</button><button class="emoji-choice" onclick="sendEmoji('🤗')">🤗</button>
+    <button class="emoji-choice" onclick="sendEmoji('🥳')">🥳</button><button class="emoji-choice" onclick="sendEmoji('😎')">😎</button>
+    <button class="emoji-choice" onclick="sendEmoji('💯')">💯</button><button class="emoji-choice" onclick="sendEmoji('✨')">✨</button>
+    <button class="emoji-choice" onclick="sendEmoji('💔')">💔</button><button class="emoji-choice" onclick="sendEmoji('🌹')">🌹</button>
+    <button class="emoji-choice" onclick="sendEmoji('🎉')">🎉</button><button class="emoji-choice" onclick="sendEmoji('👌')">👌</button>
+   </div>
+
+   <div id="giftPanel" class="gift-panel hidden">
+    <button class="gift-choice" onclick="sendGift('Rose','🌹')"><span>🌹</span>Rose</button>
+    <button class="gift-choice" onclick="sendGift('Heart','❤️')"><span>❤️</span>Heart</button>
+    <button class="gift-choice" onclick="sendGift('Teddy','🧸')"><span>🧸</span>Teddy</button>
+    <button class="gift-choice" onclick="sendGift('Flower','💐')"><span>💐</span>Flowers</button>
+    <button class="gift-choice" onclick="sendGift('Diamond','💎')"><span>💎</span>Diamond</button>
+    <button class="gift-choice" onclick="sendGift('Crown','👑')"><span>👑</span>Crown</button>
+    <button class="gift-choice" onclick="sendGift('Cake','🎂')"><span>🎂</span>Cake</button>
+    <button class="gift-choice" onclick="sendGift('Star','⭐')"><span>⭐</span>Star</button>
+    <button class="gift-choice" onclick="sendGift('Chocolate','🍫')"><span>🍫</span>Chocolate</button>
+    <button class="gift-choice" onclick="sendGift('Trophy','🏆')"><span>🏆</span>Trophy</button>
+    <button class="gift-choice" onclick="sendGift('Kiss','💋')"><span>💋</span>Kiss</button>
+    <button class="gift-choice" onclick="sendGift('Love Letter','💌')"><span>💌</span>Love Letter</button>
+    <button class="gift-choice" onclick="sendGift('Balloon','🎈')"><span>🎈</span>Balloon</button>
+    <button class="gift-choice" onclick="sendGift('Fireworks','🎆')"><span>🎆</span>Fireworks</button>
+    <button class="gift-choice" onclick="sendGift('Music','🎵')"><span>🎵</span>Music</button>
+    <button class="gift-choice" onclick="sendGift('Coffee','☕')"><span>☕</span>Coffee</button>
+   </div>
+
+   <div id="recordingStatus" class="recording-status"></div>
+   <div class="chat-note">Photos, voice recordings and videos are stored in private chat storage. Use HTTPS and allow camera/microphone permissions.</div>
+  </div>
+ </div>
+</section>
+
+<section id="mine" class="page hidden">
+ <div class="section">👤 My Profile</div>
+ <div class="item">
+  <img id="smallProfilePhoto" class="avatar" src="https://placehold.co/100x100/e1edff/2168ce?text=User" alt="User Photo">
+  <div>
+   <b id="profileName">S-CHATE Member</b><br>
+   <small id="profileEmail"></small><br>
+   <small class="online">● Account Active</small>
+  </div>
+ </div>
+
+ <div class="profile-card">
+  <div class="profile-photo-box">
+   <img id="profilePreview" class="profile-photo" src="https://placehold.co/150x150/e1edff/2168ce?text=User" alt="Profile Photo">
+   <label for="photoInput" class="action">📷 Upload Profile Photo</label>
+   <input type="file" id="photoInput" accept="image/*" class="hidden">
+   <div class="profile-help">अपने मोबाइल से फोटो चुनें। अधिकतम चुनी गई फोटो का आकार 20 MB हो सकता है।</div>
+  </div>
+
+  <button type="button" class="profile-edit" id="editProfileBtn" onclick="enableProfileEdit()">✏️ Edit Profile</button>
+
+  <form id="profileForm">
+   <label class="profile-label">Full Name *</label>
+   <input class="profile-input" id="fullName" type="text" maxlength="100" placeholder="Enter Full Name" required disabled>
+   <label class="profile-label">Father Name</label>
+   <input class="profile-input" id="fatherName" type="text" maxlength="100" placeholder="Enter Father Name" disabled>
+   <label class="profile-label">Date of Birth</label>
+   <input class="profile-input" id="dob" type="date" disabled>
+   <label class="profile-label">Gender</label>
+   <select class="profile-input" id="gender" disabled>
+    <option value="">Select Gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option><option value="Prefer not to say">Prefer not to say</option>
+   </select>
+   <label class="profile-label">Email ID</label>
+   <input class="profile-input" id="email" type="email" readonly>
+   <label class="profile-label">Mobile Number</label>
+   <input class="profile-input" id="mobile" type="tel" maxlength="15" placeholder="Enter Mobile Number" disabled>
+   <label class="profile-label">Address</label>
+   <textarea class="profile-input" id="address" rows="3" maxlength="500" placeholder="Enter Full Address" disabled></textarea>
+   <label class="profile-label">City</label>
+   <input class="profile-input" id="city" type="text" maxlength="100" placeholder="Enter City" disabled>
+   <label class="profile-label">Pin Code</label>
+   <input class="profile-input" id="pinCode" type="text" inputmode="numeric" maxlength="12" placeholder="Enter Pin Code" disabled>
+   <label class="profile-label">State</label>
+   <input class="profile-input" id="state" type="text" maxlength="100" placeholder="Enter State" disabled>
+   <label class="profile-label">Country</label>
+   <input class="profile-input" id="country" type="text" maxlength="100" placeholder="Enter Country" disabled>
+   <label class="profile-label">About Me</label>
+   <textarea class="profile-input" id="aboutMe" rows="4" maxlength="500" placeholder="Tell something about yourself" disabled></textarea>
+   <button type="submit" class="profile-save hidden" id="saveProfileBtn">💾 Save Profile</button>
+   <div id="profileStatus" class="profile-status"></div>
+  </form>
+ </div>
+ <div class="item">⚙️ Settings</div>
+ <div class="item">🌐 Language Settings</div>
+ <div class="item">🛡️ Privacy & Security</div>
+ <button class="logout" onclick="logoutUser()">Logout</button>
+</section>
+</main>
+
+<nav>
+ <button class="active" onclick="openTab('home',this)"><span>🏠</span>Home</button>
+ <button onclick="openTab('members',this)"><span>🌍</span>Members</button>
+ <button onclick="openTab('party',this)"><span>🎤</span>Party</button>
+ <button onclick="openTab('chat',this)"><span>💬</span>Chat</button>
+ <button onclick="openTab('mine',this)"><span>👤</span>Mine</button>
+</nav>
+</div>
+
+<script>
+// =====================================================
+// SUPABASE CONNECTION
+// =====================================================
+const SUPABASE_URL="https://qfrzctzxihuhbacwzmgz.supabase.co";
+const SUPABASE_KEY="sb_publishable_CRbwuTfzvPOyboF-Zz3K6w_orv72u2s";
+const supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let currentUser=null;
+let selectedProfilePhoto=null;
+let currentAvatarUrl=null;
+let profileExists=false;
+let previewObjectUrl=null;
+let allMembers=[];
+let activeConversationId=null;
+let activeOtherMember=null;
+let activeChatChannel=null;
+let mediaRecorder=null;
+let recordingStream=null;
+let recordingType=null;
+let recordingChunks=[];
+let recordingStartedAt=0;
+let recordingTimer=null;
+
+const defaultPhoto="https://placehold.co/150x150/e1edff/2168ce?text=User";
+const MAX_MEDIA_SIZE=50*1024*1024;
+
+// =====================================================
+// AUTH
+// =====================================================
+function showLogin(){
+ document.getElementById("loginForm").classList.remove("hidden");
+ document.getElementById("signupForm").classList.add("hidden");
+ document.getElementById("authMessage").innerText="";
+}
+function showSignup(){
+ document.getElementById("signupForm").classList.remove("hidden");
+ document.getElementById("loginForm").classList.add("hidden");
+ document.getElementById("authMessage").innerText="";
+}
+function showMessage(message,color){
+ const box=document.getElementById("authMessage");
+ box.style.color=color||"#2168ce";
+ box.innerText=message;
+}
+
+async function signupUser(){
+ const name=document.getElementById("signupName").value.trim();
+ const email=document.getElementById("signupEmail").value.trim();
+ const password=document.getElementById("signupPassword").value;
+ if(!name||!email||!password){showMessage("Please fill all fields.","red");return}
+ if(password.length<6){showMessage("Password must be at least 6 characters.","red");return}
+
+ const btn=document.getElementById("signupBtn");
+ btn.disabled=true;btn.innerText="Creating Account...";
+ try{
+  const {data,error}=await supabaseClient.auth.signUp({
+   email,password,options:{data:{full_name:name}}
+  });
+  if(error)throw error;
+  if(data.session){
+   showMessage("Account created successfully!","green");
+   await openMainApp(data.user);
+  }else{
+   showMessage("Registration successful! Please check your email and confirm your account before logging in.","green");
+  }
+ }catch(error){showMessage(error.message,"red")}
+ finally{btn.disabled=false;btn.innerText="Create Account"}
+}
+
+async function loginUser(){
+ const email=document.getElementById("loginEmail").value.trim();
+ const password=document.getElementById("loginPassword").value;
+ if(!email||!password){showMessage("Enter your email and password.","red");return}
+ const btn=document.getElementById("loginBtn");
+ btn.disabled=true;btn.innerText="Logging in...";
+ try{
+  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error)throw error;
+  await openMainApp(data.user);
+ }catch(error){showMessage(error.message,"red")}
+ finally{btn.disabled=false;btn.innerText="Login"}
+}
+
+async function logoutUser(){
+ await stopCurrentRecording(false);
+ if(activeChatChannel){
+  await supabaseClient.removeChannel(activeChatChannel);
+  activeChatChannel=null;
+ }
+ const {error}=await supabaseClient.auth.signOut();
+ if(error){alert(error.message);return}
+ currentUser=null;selectedProfilePhoto=null;currentAvatarUrl=null;
+ profileExists=false;allMembers=[];activeConversationId=null;activeOtherMember=null;
+ document.getElementById("mainApp").classList.add("hidden");
+ document.getElementById("authScreen").classList.remove("hidden");
+ showLogin();
+}
+
+async function openMainApp(user){
+ if(!user)return;
+ currentUser=user;
+ document.getElementById("authScreen").classList.add("hidden");
+ document.getElementById("mainApp").classList.remove("hidden");
+ document.getElementById("profileEmail").innerText=user.email||"";
+ document.getElementById("email").value=user.email||"";
+ await loadProfile(user);
+ openTab("home");
+}
+
+async function checkSession(){
+ const {data,error}=await supabaseClient.auth.getSession();
+ if(error){showMessage(error.message,"red");return}
+ if(data.session)await openMainApp(data.session.user);
+ else{
+  document.getElementById("authScreen").classList.remove("hidden");
+  document.getElementById("mainApp").classList.add("hidden");
+ }
+}
+
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_OUT"){
+  currentUser=null;
+  document.getElementById("mainApp").classList.add("hidden");
+  document.getElementById("authScreen").classList.remove("hidden");
+ }
+});
+
+// =====================================================
+// NAVIGATION AND COMMON HELPERS
+// =====================================================
+function openTab(id,btn){
+ document.querySelectorAll(".page").forEach(p=>p.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ else{
+  const tabs=["home","members","party","chat","mine"];
+  const index=tabs.indexOf(id);
+  if(index>=0)document.querySelectorAll("nav button")[index].classList.add("active");
+ }
+ if(id==="members")loadMembers();
+ if(id==="chat")loadConversations();
+ window.scrollTo(0,0);
+}
+
+function escapeHTML(value){
+ return String(value??"").replace(/[&<>"']/g,char=>({
+  "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+ }[char]));
+}
+function safePhoto(url){
+ if(typeof url==="string"&&/^https?:\/\//i.test(url))return escapeHTML(url);
+ return defaultPhoto;
+}
+function showChatStatus(message,color){
+ const el=document.getElementById("recordingStatus");
+ el.style.color=color||"#d12b2b";
+ el.innerText=message||"";
+}
+function getOtherUser(conversation){
+ return conversation.user1_id===currentUser.id?conversation.user2_id:conversation.user1_id;
+}
+function sortedPair(a,b){
+ return a.toLowerCase()<b.toLowerCase()?[a,b]:[b,a];
+}
+
+// =====================================================
+// MEMBERS DIRECTORY
+// =====================================================
+async function loadMembers(){
+ const list=document.getElementById("membersList");
+ const count=document.getElementById("memberCount");
+ const btn=document.getElementById("refreshMembersBtn");
+ if(!currentUser){list.innerHTML='<div class="empty-state">Please login first.</div>';return}
+ count.innerText="Loading members...";
+ list.innerHTML='<div class="empty-state">🌍 Finding global members...</div>';
+ btn.disabled=true;
+ try{
+  const {data,error}=await supabaseClient.from("member_directory")
+   .select("user_id,full_name,gender,city,country,about_me,avatar_url,updated_at")
+   .order("updated_at",{ascending:false}).limit(100);
+  if(error)throw error;
+  allMembers=(data||[]).filter(member=>member.user_id!==currentUser.id);
+  renderMembers(allMembers);
+ }catch(error){
+  count.innerText="Could not load members";
+  list.innerHTML='<div class="empty-state">Error loading members.<br>'+escapeHTML(error.message)+'</div>';
+ }finally{btn.disabled=false}
+}
+
+function renderMembers(members){
+ const list=document.getElementById("membersList");
+ const count=document.getElementById("memberCount");
+ const detail=document.getElementById("memberDetail");
+ detail.classList.add("hidden");detail.innerHTML="";
+ count.innerText=members.length+" member(s) found";
+ if(!members.length){
+  list.innerHTML='<div class="empty-state">🌍 No other members found yet.<br>Invite your friends to join S-CHATE!</div>';
+  return;
+ }
+ list.classList.remove("hidden");
+ list.innerHTML=members.map(member=>{
+  const name=escapeHTML(member.full_name||"S-CHATE Member");
+  const location=[member.city,member.country].filter(Boolean).map(escapeHTML).join(", ")||"Location not added";
+  return `<div class="member-card">
+   <img class="member-photo" src="${safePhoto(member.avatar_url)}" alt="Member">
+   <div class="member-info"><b>${name}</b><small>📍 ${location}</small></div>
+   <button class="view-btn" data-member-id="${escapeHTML(member.user_id)}">View</button>
+  </div>`;
+ }).join("");
+ list.querySelectorAll("[data-member-id]").forEach(button=>{
+  button.addEventListener("click",()=>openMemberProfile(button.dataset.memberId));
+ });
+}
+
+function filterMembers(){
+ const query=document.getElementById("memberSearch").value.trim().toLowerCase();
+ const filtered=allMembers.filter(member=>
+  [member.full_name,member.city,member.country,member.about_me,member.gender].join(" ").toLowerCase().includes(query)
+ );
+ renderMembers(filtered);
+}
+
+function openMemberProfile(userId){
+ const member=allMembers.find(item=>item.user_id===userId);
+ if(!member){alert("Member profile not found.");return}
+ const detail=document.getElementById("memberDetail");
+ const list=document.getElementById("membersList");
+ const count=document.getElementById("memberCount");
+ detail.innerHTML=`
+  <img class="member-detail-photo" src="${safePhoto(member.avatar_url)}" alt="Profile Photo">
+  <h2 style="margin-bottom:5px">${escapeHTML(member.full_name||"S-CHATE Member")}</h2>
+  <p style="color:#8491a5;font-size:13px">S-CHATE Global Member</p>
+  <div class="detail-info">
+   <div class="detail-row"><b>Gender</b>${escapeHTML(member.gender||"Not specified")}</div>
+   <div class="detail-row"><b>City</b>${escapeHTML(member.city||"Not added")}</div>
+   <div class="detail-row"><b>Country</b>${escapeHTML(member.country||"Not added")}</div>
+   <div class="detail-row"><b>About Me</b>${escapeHTML(member.about_me||"No introduction added yet.")}</div>
+  </div>
+  <div class="privacy-note">🛡️ Private contact information is not displayed.</div>
+  <button class="action" style="width:100%" id="startMemberChat">💬 Start Private Chat</button>
+  <button class="back-btn" id="backToMembers">← Back to Members</button>
+ `;
+ detail.classList.remove("hidden");list.classList.add("hidden");
+ count.innerText="Viewing member profile";
+ document.getElementById("startMemberChat").addEventListener("click",()=>startChatWithMember(member));
+ document.getElementById("backToMembers").addEventListener("click",()=>{
+  detail.classList.add("hidden");list.classList.remove("hidden");
+  count.innerText=allMembers.length+" member(s) found";
+ });
+ window.scrollTo(0,0);
+}
+
+// =====================================================
+// PRIVATE CONVERSATIONS
+// =====================================================
+async function startChatWithMember(member){
+ if(!currentUser||!member||!member.user_id)return;
+ if(member.user_id===currentUser.id){alert("You cannot start a chat with yourself.");return}
+ openTab("chat");
+ try{
+  const pair=sortedPair(currentUser.id,member.user_id);
+  let {data:conversation,error}=await supabaseClient.from("conversations")
+   .select("*").eq("user1_id",pair[0]).eq("user2_id",pair[1]).maybeSingle();
+  if(error)throw error;
+
+  if(!conversation){
+   const result=await supabaseClient.from("conversations")
+    .insert({user1_id:pair[0],user2_id:pair[1]}).select().single();
+   if(result.error){
+    // Another device may have created the same conversation at the same time.
+    const retry=await supabaseClient.from("conversations")
+     .select("*").eq("user1_id",pair[0]).eq("user2_id",pair[1]).maybeSingle();
+    if(retry.error||!retry.data)throw result.error;
+    conversation=retry.data;
+   }else conversation=result.data;
+  }
+  await openConversation(conversation,member);
+  await loadConversations();
+ }catch(error){
+  alert("Could not open chat: "+error.message);
+ }
+}
+
+async function loadConversations(){
+ const list=document.getElementById("conversationList");
+ if(!currentUser){list.innerHTML='<div class="empty-state">Please login first.</div>';return}
+ list.innerHTML='<div class="empty-state">Loading conversations...</div>';
+ try{
+  const {data:conversations,error}=await supabaseClient.from("conversations")
+   .select("id,user1_id,user2_id,created_at")
+   .or("user1_id.eq."+currentUser.id+",user2_id.eq."+currentUser.id)
+   .order("created_at",{ascending:false}).limit(100);
+  if(error)throw error;
+  if(!conversations||!conversations.length){
+   list.innerHTML='<div class="empty-state">💬 No conversations yet.<br>Open Members and select a person to start chatting.</div>';
+   return;
+  }
+
+  const otherIds=[...new Set(conversations.map(getOtherUser))];
+  const {data:members,error:memberError}=await supabaseClient.from("member_directory")
+   .select("user_id,full_name,avatar_url,city,country")
+   .in("user_id",otherIds);
+  if(memberError)throw memberError;
+
+  const memberMap={};
+  (members||[]).forEach(m=>memberMap[m.user_id]=m);
+
+  const ids=conversations.map(c=>c.id);
+  const {data:recentMessages}=await supabaseClient.from("messages")
+   .select("conversation_id,message_type,content,gift_emoji,created_at")
+   .in("conversation_id",ids).order("created_at",{ascending:false}).limit(200);
+
+  const latest={};
+  (recentMessages||[]).forEach(m=>{
+   if(!latest[m.conversation_id])latest[m.conversation_id]=m;
+  });
+
+  list.innerHTML=conversations.map(c=>{
+   const otherId=getOtherUser(c);
+   const m=memberMap[otherId]||{};
+   const last=latest[c.id];
+   let preview="Start a conversation";
+   if(last){
+    if(last.message_type==="text")preview=last.content||"Message";
+    else if(last.message_type==="photo")preview="📷 Photo";
+    else if(last.message_type==="voice")preview="🎤 Voice message";
+    else if(last.message_type==="video")preview="🎥 Video message";
+    else if(last.message_type==="gift")preview=(last.gift_emoji||"🎁")+" Gift";
+    else if(last.message_type==="emoji")preview=last.content||"😊 Emoji";
+   }
+   return `<div class="conversation-item" data-conversation-id="${c.id}" data-other-id="${otherId}">
+    <img src="${safePhoto(m.avatar_url)}" alt="Member">
+    <div class="conversation-info">
+     <b>${escapeHTML(m.full_name||"S-CHATE Member")}</b>
+     <small>${escapeHTML(preview)}</small>
+    </div>
+    <span>›</span>
+   </div>`;
+  }).join("");
+
+  list.querySelectorAll("[data-conversation-id]").forEach(el=>{
+   el.addEventListener("click",async()=>{
+    const conversation=conversations.find(c=>c.id===el.dataset.conversationId);
+    const member=memberMap[el.dataset.otherId]||{user_id:el.dataset.otherId,full_name:"S-CHATE Member"};
+    await openConversation(conversation,member);
+   });
+  });
+ }catch(error){
+  list.innerHTML='<div class="empty-state">Could not load chats.<br>'+escapeHTML(error.message)+'</div>';
+ }
+}
+
+async function openConversation(conversation,member){
+ if(!conversation||!member)return;
+ if(activeChatChannel){
+  await supabaseClient.removeChannel(activeChatChannel);
+  activeChatChannel=null;
+ }
+ activeConversationId=conversation.id;
+ activeOtherMember=member;
+
+ document.getElementById("chatListPanel").classList.add("hidden");
+ document.getElementById("chatWindow").classList.remove("hidden");
+ document.getElementById("chatOtherName").innerText=member.full_name||"S-CHATE Member";
+ document.getElementById("chatOtherPhoto").src=safePhoto(member.avatar_url);
+ document.getElementById("emojiPanel").classList.add("hidden");
+ document.getElementById("giftPanel").classList.add("hidden");
+ showChatStatus("");
+
+ await loadChatMessages();
+
+ activeChatChannel=supabaseClient.channel("chat-"+conversation.id)
+  .on("postgres_changes",{
+   event:"INSERT",schema:"public",table:"messages",
+   filter:"conversation_id=eq."+conversation.id
+  },payload=>{
+   if(payload.new)loadChatMessages();
+  })
+  .subscribe();
+
+ document.getElementById("messageInput").focus();
+}
+
+function closeChatWindow(){
+ activeConversationId=null;activeOtherMember=null;
+ if(activeChatChannel){
+  supabaseClient.removeChannel(activeChatChannel);
+  activeChatChannel=null;
+ }
+ document.getElementById("chatWindow").classList.add("hidden");
+ document.getElementById("chatListPanel").classList.remove("hidden");
+ showChatStatus("");
+ loadConversations();
+}
+
+// =====================================================
+// LOAD AND DISPLAY MESSAGES
+// =====================================================
+async function loadChatMessages(){
+ if(!activeConversationId)return;
+ const list=document.getElementById("messageList");
+ const conversationId=activeConversationId;
+ try{
+  const {data,error}=await supabaseClient.from("messages")
+   .select("*").eq("conversation_id",conversationId)
+   .order("created_at",{ascending:true}).limit(200);
+  if(error)throw error;
+  if(conversationId!==activeConversationId)return;
+  if(!data||!data.length){
+   list.innerHTML='<div class="empty-state">👋 Say hello and start your conversation!</div>';
+   return;
+  }
+
+  const rendered=await Promise.all(data.map(renderMessage));
+  if(conversationId!==activeConversationId)return;
+  list.innerHTML=rendered.join("");
+  list.scrollTop=list.scrollHeight;
+ }catch(error){
+  list.innerHTML='<div class="empty-state">Message loading error: '+escapeHTML(error.message)+'</div>';
+ }
+}
+
+async function renderMessage(message){
+ const mine=message.sender_id===currentUser.id;
+ const rowClass=mine?"message-row mine":"message-row";
+ const time=new Date(message.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"});
+ let body="";
+
+ if(message.message_type==="text"){
+  body=`<div class="message-text">${escapeHTML(message.content)}</div>`;
+ }else if(message.message_type==="emoji"){
+  body=`<div style="font-size:35px">${escapeHTML(message.content)}</div>`;
+ }else if(message.message_type==="gift"){
+  body=`<div class="gift-message">${escapeHTML(message.gift_emoji||"🎁")}<b>Sent a ${escapeHTML(message.gift_name||"Gift")}</b></div>`;
+ }else if(["photo","voice","video"].includes(message.message_type)){
+  const {data,error}=await supabaseClient.storage.from("chat-media")
+   .createSignedUrl(message.media_path,3600);
+  if(error||!data?.signedUrl){
+   body='<div class="message-text">Media unavailable or link expired.</div>';
+  }else{
+   const url=escapeHTML(data.signedUrl);
+   if(message.message_type==="photo"){
+    body=`<img class="message-media" src="${url}" alt="Shared photo" loading="lazy">`;
+   }else if(message.message_type==="voice"){
+    body=`<div>🎤 Voice message</div><audio class="message-media" controls preload="none" src="${url}"></audio>`;
+   }else{
+    body=`<div>🎥 Video message</div><video class="message-media" controls playsinline preload="metadata" src="${url}"></video>`;
+   }
+  }
+ }
+ return `<div class="${rowClass}"><div class="message-bubble">${body}<div class="message-time">${time}</div></div></div>`;
+}
+
+// =====================================================
+// SEND TEXT AND EMOJI
+// =====================================================
+async function insertMessage(payload){
+ if(!currentUser||!activeConversationId)throw new Error("Open a conversation first.");
+ const message={
+  conversation_id:activeConversationId,
+  sender_id:currentUser.id,
+  ...payload
+ };
+ const {error}=await supabaseClient.from("messages").insert(message);
+ if(error)throw error;
+ await loadChatMessages();
+ await loadConversations();
+}
+
+async function sendTextMessage(){
+ const input=document.getElementById("messageInput");
+ const content=input.value.trim();
+ if(!content)return;
+ if(!activeConversationId){alert("Open a chat first.");return}
+ const btn=document.getElementById("sendMessageBtn");
+ btn.disabled=true;
+ try{
+  await insertMessage({message_type:"text",content});
+  input.value="";
+ }catch(error){alert("Message could not be sent: "+error.message)}
+ finally{btn.disabled=false;input.focus()}
+}
+
+document.getElementById("messageInput").addEventListener("keydown",event=>{
+ if(event.key==="Enter"&&!event.shiftKey){
+  event.preventDefault();sendTextMessage();
+ }
+});
+
+async function sendEmoji(emoji){
+ try{
+  await insertMessage({message_type:"emoji",content:emoji});
+  document.getElementById("emojiPanel").classList.add("hidden");
+ }catch(error){alert(error.message)}
+}
+
+async function sendGift(name,emoji){
+ try{
+  await insertMessage({message_type:"gift",gift_name:name,gift_emoji:emoji});
+  document.getElementById("giftPanel").classList.add("hidden");
+ }catch(error){alert("Gift could not be sent: "+error.message)}
+}
+
+function toggleEmojiPanel(){
+ document.getElementById("giftPanel").classList.add("hidden");
+ document.getElementById("emojiPanel").classList.toggle("hidden");
+}
+function toggleGiftPanel(){
+ document.getElementById("emojiPanel").classList.add("hidden");
+ document.getElementById("giftPanel").classList.toggle("hidden");
+}
+
+// =====================================================
+// PHOTO UPLOAD
+// =====================================================
+document.getElementById("chatPhotoInput").addEventListener("change",async function(event){
+ const files=Array.from(event.target.files||[]);
+ if(!files.length)return;
+ try{
+  for(const file of files){
+   const kind=file.type.startsWith("video/")?"video":"photo";
+   await uploadChatMedia(file,kind);
+  }
+ }catch(error){alert("Gallery upload failed: "+error.message)}
+ finally{event.target.value=""}
+});
+
+document.getElementById("cameraInput").addEventListener("change",async function(event){
+ const file=event.target.files&&event.target.files[0];
+ if(!file)return;
+ try{await uploadChatMedia(file,"photo")}catch(error){alert("Camera upload failed: "+error.message)}
+ finally{event.target.value=""}
+});
+
+async function uploadChatMedia(file,type){
+ if(!activeConversationId||!currentUser)throw new Error("Open a conversation first.");
+ if(!file)throw new Error("No file selected.");
+ if(file.size>MAX_MEDIA_SIZE)throw new Error("File size must be 50 MB or less.");
+
+ const allowed={
+  photo:["image/jpeg","image/png","image/webp","image/gif"],
+  voice:["audio/webm","audio/mp4","audio/ogg","audio/mpeg"],
+  video:["video/mp4","video/webm","video/quicktime"]
+ };
+ const mime=(file.type||"").split(";")[0].toLowerCase();
+ if(!allowed[type]?.includes(mime)){
+  throw new Error("This file format is not supported: "+(mime||"unknown"));
+ }
+
+ showChatStatus("Uploading "+type+"...","#2168ce");
+ const conversationId=activeConversationId;
+ const extension={
+  "image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif",
+  "audio/webm":"webm","audio/mp4":"m4a","audio/ogg":"ogg","audio/mpeg":"mp3",
+  "video/mp4":"mp4","video/webm":"webm","video/quicktime":"mov"
+ }[mime]||"bin";
+
+ const filePath=conversationId+"/"+currentUser.id+"/"+type+"-"+Date.now()+"-"+Math.random().toString(36).slice(2,9)+"."+extension;
+
+ const {data,error}=await supabaseClient.storage.from("chat-media").upload(filePath,file,{
+  contentType:mime,cacheControl:"3600",upsert:false
+ });
+ if(error)throw error;
+
+ if(conversationId!==activeConversationId){
+  showChatStatus("Upload finished, but the chat was changed. Open the original chat to see the message.","#2168ce");
+  return;
+ }
+
+ const duration=Number(file.durationSeconds||0);
+ try{
+  await insertMessage({
+   message_type:type,
+   media_path:data.path,
+   media_mime_type:mime,
+   media_size_bytes:file.size,
+   media_duration_seconds:duration>0?Math.min(3600,Math.round(duration)):null
+  });
+  showChatStatus("Media sent successfully.","#16a66a");
+  setTimeout(()=>showChatStatus(""),2500);
+ }catch(error){
+  showChatStatus("File uploaded but message was not saved: "+error.message);
+  throw error;
+ }
+}
+
+// =====================================================
+// VOICE AND VIDEO RECORDING
+// =====================================================
+function chooseRecorderMime(type){
+ const candidates=type==="voice"
+  ?["audio/webm;codecs=opus","audio/webm","audio/mp4","audio/ogg"]
+  :["video/webm;codecs=vp8,opus","video/webm","video/mp4"];
+ if(!window.MediaRecorder)return "";
+ for(const mime of candidates){
+  try{if(MediaRecorder.isTypeSupported(mime))return mime}catch(e){}
+ }
+ return "";
+}
+
+async function startRecording(type){
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){
+  alert("Recording is not supported in this browser. Please use an updated Chrome browser over HTTPS.");
+  return;
+ }
+ if(!activeConversationId){alert("Open a conversation first.");return}
+ if(mediaRecorder&&mediaRecorder.state!=="inactive"){
+  alert("A recording is already running.");return;
+ }
+
+ try{
+  recordingType=type;
+  recordingChunks=[];
+  recordingStartedAt=Date.now();
+
+  recordingStream=await navigator.mediaDevices.getUserMedia(
+   type==="voice"?{audio:true}:{audio:true,video:{facingMode:"user"}}
+  );
+
+  const mimeType=chooseRecorderMime(type);
+  mediaRecorder=mimeType
+   ?new MediaRecorder(recordingStream,{mimeType})
+   :new MediaRecorder(recordingStream);
+
+  mediaRecorder.ondataavailable=event=>{
+   if(event.data&&event.data.size>0)recordingChunks.push(event.data);
+  };
+
+  mediaRecorder.onerror=event=>{
+   showChatStatus("Recording error: "+(event.error?.message||"Unknown error"));
+   stopRecordingTracks();
+  };
+
+  mediaRecorder.onstop=async()=>{
+   const duration=Math.max(1,Math.round((Date.now()-recordingStartedAt)/1000));
+   const blobType=(mediaRecorder.mimeType|| (type==="voice"?"audio/webm":"video/webm")).split(";")[0];
+   const blob=new Blob(recordingChunks,{type:blobType});
+   stopRecordingTracks();
+
+   if(blob.size===0){
+    showChatStatus("Recording was empty. Please try again.");
+    return;
+   }
+   if(blob.size>MAX_MEDIA_SIZE){
+    showChatStatus("Recording is larger than 50 MB. Please record a shorter clip.");
+    return;
+   }
+
+   const extension=blobType==="video/mp4"?"mp4":blobType==="audio/mp4"?"m4a":"webm";
+   const file=new File([blob],type+"-"+Date.now()+"."+extension,{type:blobType});
+   file.durationSeconds=duration;
+
+   try{
+    await uploadChatMedia(file,type);
+   }catch(error){
+    showChatStatus("Could not send recording: "+error.message);
+    alert(error.message);
+   }
+  };
+
+  mediaRecorder.start(1000);
+  document.getElementById(type==="voice"?"voiceRecordBtn":"videoRecordBtn").classList.add("recording");
+  document.getElementById(type==="voice"?"voiceRecordBtn":"videoRecordBtn").innerText=type==="voice"?"⏹ Stop Voice":"⏹ Stop Video";
+  showChatStatus(type==="voice"?"🔴 Recording voice... Press Stop Voice when finished.":"🔴 Recording video... Press Stop Video when finished.");
+  recordingTimer=setTimeout(()=>{
+   if(mediaRecorder&&mediaRecorder.state==="recording"){
+    stopCurrentRecording(true);
+   }
+  },60000);
+
+ }catch(error){
+  stopRecordingTracks();
+  showChatStatus("Microphone/camera permission error: "+error.message);
+  alert("Please allow camera and microphone permissions. "+error.message);
+ }
+}
+
+function stopRecordingTracks(){
+ if(recordingTimer){clearTimeout(recordingTimer);recordingTimer=null}
+ if(recordingStream){
+  recordingStream.getTracks().forEach(track=>track.stop());
+  recordingStream=null;
+ }
+ document.getElementById("voiceRecordBtn").classList.remove("recording");
+ document.getElementById("videoRecordBtn").classList.remove("recording");
+ document.getElementById("voiceRecordBtn").innerText="🎤 Voice";
+ document.getElementById("videoRecordBtn").innerText="🎥 Video";
+}
+
+async function stopCurrentRecording(shouldSave){
+ if(mediaRecorder&&mediaRecorder.state!=="inactive"){
+  mediaRecorder.stop();
+ }else{
+  stopRecordingTracks();
+ }
+ if(!shouldSave)recordingChunks=[];
+}
+
+async function toggleVoiceRecording(){
+ if(mediaRecorder&&mediaRecorder.state==="recording"){
+  if(recordingType!=="voice"){alert("Stop the current recording first.");return}
+  await stopCurrentRecording(true);
+ }else{
+  await startRecording("voice");
+ }
+}
+
+async function toggleVideoRecording(){
+ if(mediaRecorder&&mediaRecorder.state==="recording"){
+  if(recordingType!=="video"){alert("Stop the current recording first.");return}
+  await stopCurrentRecording(true);
+ }else{
+  await startRecording("video");
+ }
+}
+
+// =====================================================
+// S-CHATE ATTACHMENT MENU, LOCATION REQUESTS & TRANSLATOR SETTINGS
+// =====================================================
+function toggleAttachmentMenu(){
+ const panel=document.getElementById("attachmentMenu");
+ panel.classList.toggle("hidden");
+ document.getElementById("emojiPanel").classList.add("hidden");
+ document.getElementById("giftPanel").classList.add("hidden");
+ document.getElementById("translatorPanel").classList.add("hidden");
+}
+function closeAttachmentMenu(){document.getElementById("attachmentMenu").classList.add("hidden")}
+function toggleTranslatorPanel(){
+ document.getElementById("emojiPanel").classList.add("hidden");
+ document.getElementById("giftPanel").classList.add("hidden");
+ document.getElementById("translatorPanel").classList.toggle("hidden");
+}
+let voiceTypingRecognition=null;
+let voiceTypingActive=false;
+function speechLanguageCode(code){
+ const map={hi:"hi-IN",en:"en-IN",ur:"ur-PK",ar:"ar-SA",zh:"zh-CN",ja:"ja-JP",fr:"fr-FR",de:"de-DE",es:"es-ES",pt:"pt-PT",ru:"ru-RU",bn:"bn-IN",pa:"pa-IN",it:"it-IT",ko:"ko-KR",tr:"tr-TR"};
+ return map[code]||"hi-IN";
+}
+function toggleVoiceTyping(){
+ const status=document.getElementById("voiceTypingStatus");
+ const button=document.getElementById("voiceTypingBtn");
+ if(!status||!button)return;
+ if(voiceTypingActive&&voiceTypingRecognition){
+  try{voiceTypingRecognition.stop();}catch(error){}
+  return;
+ }
+ const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+ if(!SpeechRecognition){
+  status.innerText="आपके मौजूदा ब्राउज़र/मोड में Voice Typing सपोर्ट नहीं है। कृपया Google Chrome में इस पेज को HTTPS लिंक से खोलें।";
+  return;
+ }
+ if(location.protocol!=="https:"&&location.hostname!=="localhost"&&location.protocol!=="file:"){
+  status.innerText="Voice Typing के लिए सुरक्षित HTTPS पेज खोलें।";
+  return;
+ }
+ try{
+  voiceTypingRecognition=new SpeechRecognition();
+  const selected=document.getElementById("translateFrom")?.value||"hi";
+  voiceTypingRecognition.lang=speechLanguageCode(selected==="auto"?"hi":selected);
+  // A single utterance is more reliable on Android Chrome; tap again for another sentence.
+  voiceTypingRecognition.continuous=false;
+  voiceTypingRecognition.interimResults=true;
+  voiceTypingRecognition.maxAlternatives=1;
+  voiceTypingRecognition.onstart=()=>{
+   voiceTypingActive=true;
+   button.textContent="⏹️ बोलना बंद करें";
+   button.classList.add("listening");
+   status.innerText="🔴 माइक चालू है—अब साफ़-साफ़ बोलिए।";
+  };
+  voiceTypingRecognition.onresult=(event)=>{
+   let finalText="",interimText="";
+   for(let i=event.resultIndex;i<event.results.length;i++){
+    const piece=event.results[i][0]?.transcript||"";
+    if(event.results[i].isFinal)finalText+=piece;else interimText+=piece;
+   }
+   if(finalText.trim()){
+    const input=document.getElementById("messageInput");
+    const aiBox=document.getElementById("aiTranslateInput");
+    if(input){input.value=(input.value?input.value+" ":"")+finalText.trim();input.dispatchEvent(new Event("input",{bubbles:true}));}
+    if(aiBox){aiBox.value=(aiBox.value?aiBox.value+" ":"")+finalText.trim();aiBox.dispatchEvent(new Event("input",{bubbles:true}));}
+    status.innerText="✅ आपकी बात टेक्स्ट में लिख दी गई है। जाँचकर भेजें या अनुवाद करें।";
+   }else if(interimText){
+    status.innerText="सुन रहा है: "+interimText;
+   }
+  };
+  voiceTypingRecognition.onerror=(event)=>{
+   const messages={
+    "not-allowed":"माइक की अनुमति बंद है। Chrome की Site settings में Microphone को Allow करें।",
+    "service-not-allowed":"ब्राउज़र ने Speech सेवा रोक दी है। Google Chrome और इंटरनेट से फिर कोशिश करें।",
+    "audio-capture":"माइक नहीं मिल रहा। फोन का Microphone चेक करें और दूसरी रिकॉर्डिंग बंद करें।",
+    "network":"Speech सेवा के लिए इंटरनेट कनेक्शन नहीं मिला। इंटरनेट चालू करके फिर कोशिश करें।",
+    "no-speech":"आवाज़ सुनाई नहीं दी। माइक के पास बोलकर दोबारा दबाएँ।",
+    "aborted":"Voice Typing रोक दी गई।",
+    "language-not-supported":"चुनी हुई भाषा अभी Speech Typing में समर्थित नहीं है।"
+   };
+   status.innerText="⚠️ "+(messages[event.error]||("Voice Typing में समस्या: "+event.error));
+  };
+  voiceTypingRecognition.onend=()=>{
+   voiceTypingActive=false;
+   button.textContent="🎤 बोलकर टाइप करें";
+   button.classList.remove("listening");
+   if(status.innerText.includes("माइक चालू")||status.innerText.startsWith("सुन रहा है")){
+    status.innerText="सुनना पूरा हुआ। टेक्स्ट जाँचें; अगला वाक्य बोलने के लिए फिर माइक दबाएँ।";
+   }
+  };
+  voiceTypingRecognition.start();
+ }catch(error){
+  voiceTypingActive=false;
+  button.textContent="🎤 बोलकर टाइप करें";
+  button.classList.remove("listening");
+  status.innerText="Voice Typing शुरू नहीं हुई: "+(error?.message||error)+". Chrome में माइक अनुमति जाँचें।";
+ }
+}
+
+let latestTranslatedText="";
+async function runAITextTranslation(){
+ const input=document.getElementById("aiTranslateInput");
+ const resultBox=document.getElementById("aiTranslateResultBox");
+ const result=document.getElementById("aiTranslateResult");
+ const button=document.getElementById("runTextTranslationBtn");
+ const status=document.getElementById("translatorStatus");
+ const text=input.value.trim();
+ const from=document.getElementById("translateFrom").value;
+ const to=document.getElementById("translateTo").value;
+ const languageNames={
+  auto:"Auto Detect",hi:"Hindi",en:"English",ur:"Urdu",ar:"Arabic",
+  zh:"Chinese",ja:"Japanese",fr:"French",de:"German",es:"Spanish",
+  pt:"Portuguese",ru:"Russian",bn:"Bengali",pa:"Punjabi",it:"Italian",
+  ko:"Korean",tr:"Turkish"
+ };
+ if(!text){alert("पहले अनुवाद के लिए संदेश लिखें या Voice Typing से बोलें।");return}
+ if(from!=="auto"&&from===to){alert("Translate from और Translate to में अलग-अलग भाषाएँ चुनें।");return}
+ if(!currentUser){alert("AI Translator इस्तेमाल करने के लिए पहले लॉगिन करें।");return}
+ button.disabled=true;
+ button.textContent="⏳ Translating…";
+ resultBox.style.display="block";
+ result.textContent="Gemini AI अनुवाद कर रहा है…";
+ status.textContent="आपका संदेश सुरक्षित Supabase Function के माध्यम से अनुवाद किया जा रहा है।";
+ latestTranslatedText="";
+ try{
+  const {data,error}=await supabaseClient.functions.invoke("gemini-translator",{
+   body:{
+    text:text,
+    sourceLanguage:languageNames[from]||from,
+    targetLanguage:languageNames[to]||to
+   }
+  });
+  if(error)throw error;
+  if(!data||typeof data.translation!=="string"||!data.translation.trim()){
+   throw new Error((data&&data.error)||"Translation service returned an empty response.");
+  }
+  latestTranslatedText=data.translation.trim();
+  result.textContent=latestTranslatedText;
+  status.textContent="✅ Gemini AI Translator सफलतापूर्वक काम कर रहा है। अनुवाद को चैट में डालने से पहले जाँच लें।";
+ }catch(error){
+  console.error("Gemini Translator error:",error);
+  let detail=error&&error.message?error.message:String(error);
+  if(error&&error.context&&typeof error.context.json==="function"){
+   try{const info=await error.context.json();if(info&&info.error)detail=info.error;}catch(_e){}
+  }
+  result.textContent="अनुवाद असफल हुआ: "+detail;
+  status.textContent="अनुवाद सेवा से उत्तर नहीं मिला। इंटरनेट और Supabase Function की स्थिति जाँचें।";
+ }finally{
+  button.disabled=false;
+  button.textContent="🌐 Translate message";
+ }
+}
+function useTranslatedMessage(){
+ if(!latestTranslatedText)return;
+ const messageInput=document.getElementById("messageInput");
+ messageInput.value=latestTranslatedText;
+ messageInput.focus();
+ messageInput.dispatchEvent(new Event("input",{bubbles:true}));
+ showChatStatus("Translated text added to your message box. Review it before sending.");
+}
+
+function saveTranslatorPreferences(){
+ const prefs={from:document.getElementById("translateFrom").value,to:document.getElementById("translateTo").value,
+  text:document.getElementById("translateTextOn").checked,voice:document.getElementById("translateVoiceOn").checked,
+  voiceCall:document.getElementById("translateVoiceCallOn").checked,videoCall:document.getElementById("translateVideoCallOn").checked};
+ try{localStorage.setItem("S-CHATE-Translator-Preferences",JSON.stringify(prefs));
+ document.getElementById("translatorStatus").innerText="✅ आपकी Translator preferences इस डिवाइस पर सेव हो गई हैं। Gemini Translator कनेक्ट है।";
+ }catch(e){document.getElementById("translatorStatus").innerText="Could not save preferences on this device."}
+}
+function loadTranslatorPreferences(){
+ try{
+  const raw=localStorage.getItem("S-CHATE-Translator-Preferences");
+  if(!raw)return;
+  const prefs=JSON.parse(raw);
+  if(prefs.from)document.getElementById("translateFrom").value=prefs.from;
+  if(prefs.to)document.getElementById("translateTo").value=prefs.to;
+  if(typeof prefs.text==="boolean")document.getElementById("translateTextOn").checked=prefs.text;
+  if(typeof prefs.voice==="boolean")document.getElementById("translateVoiceOn").checked=prefs.voice;
+  if(typeof prefs.voiceCall==="boolean")document.getElementById("translateVoiceCallOn").checked=prefs.voiceCall;
+  if(typeof prefs.videoCall==="boolean")document.getElementById("translateVideoCallOn").checked=prefs.videoCall;
+ }catch(error){console.warn("Could not load translator preferences:",error)}
+}
+
+function startCall(kind){
+ closeAttachmentMenu();
+ alert((kind==="video"?"Video":"Voice")+" calling needs WebRTC call signaling and a secure backend. This button is a setup placeholder; no call has been placed.");
+}
+async function requestOtherLocation(){
+ if(!activeConversationId){alert("Open a private chat first.");return}
+ try{await insertMessage({message_type:"text",content:"📍 Location request: Please share your location with me if you agree."});
+ showChatStatus("Location request sent. The other person must choose to share.");}
+ catch(error){alert("Could not send location request: "+error.message)}
+}
+async function shareCurrentLocation(){
+ if(!activeConversationId||!currentUser){alert("Open a private chat first.");return}
+ if(!navigator.geolocation){alert("Location is not supported by this browser.");return}
+ if(!confirm("S-CHATE will access your device location only now and share it in this chat. Continue?"))return;
+ showChatStatus("Waiting for device location permission...");
+ navigator.geolocation.getCurrentPosition(async position=>{
+  try{
+   const row={conversation_id:activeConversationId,sender_id:currentUser.id,latitude:position.coords.latitude,
+    longitude:position.coords.longitude,accuracy:position.coords.accuracy,updated_at:new Date().toISOString(),
+    expires_at:new Date(Date.now()+60*60*1000).toISOString(),active:true};
+   const {error}=await supabaseClient.from("chat_live_locations").upsert(row,{onConflict:"conversation_id,sender_id"});
+   if(error)throw error;
+   await insertMessage({message_type:"text",content:"📍 I shared my live location for up to 1 hour. You can open the location from this chat."});
+   showChatStatus("Location shared. You can stop sharing from the app's location controls.");
+  }catch(error){showChatStatus("Location could not be shared: "+error.message);alert(error.message)}
+ },error=>{showChatStatus("Location permission/error: "+error.message);alert("Location was not shared: "+error.message)},
+ {enableHighAccuracy:true,timeout:15000,maximumAge:0});
+}
+
+// =====================================================
+// PROFILE EDIT MODE
+// =====================================================
+function setProfileEditMode(enabled){
+ const fields=["fullName","fatherName","dob","gender","mobile","address","city","pinCode","state","country","aboutMe"];
+ fields.forEach(id=>document.getElementById(id).disabled=!enabled);
+ document.getElementById("photoInput").disabled=!enabled;
+ document.getElementById("saveProfileBtn").classList.toggle("hidden",!enabled);
+ document.getElementById("editProfileBtn").classList.toggle("hidden",enabled);
+}
+function enableProfileEdit(){
+ setProfileEditMode(true);
+ const status=document.getElementById("profileStatus");
+ status.style.color="#2168ce";
+ status.innerText="Edit your information and press Save Profile.";
+}
+
+// =====================================================
+// PROFILE PHOTO CONVERSION
+// =====================================================
+function convertPhotoToJPG(file){
+ return new Promise((resolve,reject)=>{
+  if(!file||!file.type.startsWith("image/")){reject(new Error("Selected file is not a supported image."));return}
+  if(file.size>20*1024*1024){reject(new Error("Photo is too large. Please select a photo under 20 MB."));return}
+  const objectUrl=URL.createObjectURL(file);
+  const img=new Image();
+  img.onload=async function(){
+   try{
+    let width=img.naturalWidth,height=img.naturalHeight;
+    if(!width||!height)throw new Error("Could not read this photo.");
+    const scale=Math.min(1,1400/Math.max(width,height));
+    width=Math.round(width*scale);height=Math.round(height*scale);
+    const canvas=document.createElement("canvas");
+    canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext("2d");
+    if(!ctx)throw new Error("Photo conversion is not supported.");
+    ctx.fillStyle="#ffffff";ctx.fillRect(0,0,width,height);
+    ctx.drawImage(img,0,0,width,height);
+    function makeBlob(quality){
+     return new Promise((res,rej)=>canvas.toBlob(blob=>blob?res(blob):rej(new Error("Could not convert photo.")),"image/jpeg",quality));
+    }
+    let blob=await makeBlob(.82);
+    if(blob.size>5*1024*1024)blob=await makeBlob(.65);
+    if(blob.size>5*1024*1024)blob=await makeBlob(.50);
+    if(blob.size>5*1024*1024)throw new Error("Converted photo is still too large.");
+    URL.revokeObjectURL(objectUrl);
+    resolve(new File([blob],"profile-photo.jpg",{type:"image/jpeg",lastModified:Date.now()}));
+   }catch(error){URL.revokeObjectURL(objectUrl);reject(error)}
+  };
+  img.onerror=()=>{URL.revokeObjectURL(objectUrl);reject(new Error("Please select a JPG or PNG photo."))};
+  img.src=objectUrl;
+ });
+}
+
+document.getElementById("photoInput").addEventListener("change",async function(event){
+ const file=event.target.files[0];if(!file)return;
+ const status=document.getElementById("profileStatus");
+ status.style.color="#2168ce";status.innerText="Preparing your photo...";
+ try{
+  selectedProfilePhoto=await convertPhotoToJPG(file);
+  if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl=URL.createObjectURL(selectedProfilePhoto);
+  document.getElementById("profilePreview").src=previewObjectUrl;
+  document.getElementById("smallProfilePhoto").src=previewObjectUrl;
+  status.style.color="#16a66a";status.innerText="Photo ready. Now press Save Profile.";
+ }catch(error){
+  selectedProfilePhoto=null;this.value="";
+  status.style.color="red";status.innerText="Photo error: "+error.message;alert(error.message);
+ }
+});
+
+// =====================================================
+// LOAD PROFILE
+// =====================================================
+async function loadProfile(user){
+ if(!user)return;
+ const status=document.getElementById("profileStatus");
+ status.style.color="#2168ce";status.innerText="Loading profile...";
+ const {data,error}=await supabaseClient.from("profiles")
+  .select("*").eq("user_id",user.id).maybeSingle();
+ if(error){status.style.color="red";status.innerText="Profile loading error: "+error.message;return}
+
+ profileExists=!!data;
+ document.getElementById("email").value=user.email||"";
+ if(data){
+  document.getElementById("fullName").value=data.full_name||"";
+  document.getElementById("fatherName").value=data.father_name||"";
+  document.getElementById("dob").value=data.date_of_birth||"";
+  document.getElementById("gender").value=data.gender||"";
+  document.getElementById("mobile").value=data.mobile_number||"";
+  document.getElementById("address").value=data.address||"";
+  document.getElementById("city").value=data.city||"";
+  document.getElementById("pinCode").value=data.pin_code||"";
+  document.getElementById("state").value=data.state||"";
+  document.getElementById("country").value=data.country||"";
+  document.getElementById("aboutMe").value=data.about_me||"";
+  currentAvatarUrl=data.avatar_url||null;
+ }else{
+  currentAvatarUrl=null;
+  document.getElementById("fullName").value=user.user_metadata?.full_name||"";
+ }
+ const photo=currentAvatarUrl||defaultPhoto;
+ document.getElementById("profilePreview").src=photo;
+ document.getElementById("smallProfilePhoto").src=photo;
+ document.getElementById("profileName").innerText=document.getElementById("fullName").value||"S-CHATE Member";
+ selectedProfilePhoto=null;document.getElementById("photoInput").value="";
+ if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null}
+ setProfileEditMode(!profileExists);
+ status.style.color="#16a66a";
+ status.innerText=profileExists?"Profile loaded successfully.":"Welcome! Complete your profile and save it.";
+}
+
+// =====================================================
+// SAVE PROFILE
+// =====================================================
+document.getElementById("profileForm").addEventListener("submit",async function(event){
+ event.preventDefault();
+ if(!currentUser){alert("Please login first.");return}
+ const fullName=document.getElementById("fullName").value.trim();
+ if(!fullName){alert("Please enter your Full Name.");return}
+ const btn=document.getElementById("saveProfileBtn");
+ const status=document.getElementById("profileStatus");
+ btn.disabled=true;btn.innerText="Saving...";
+ status.style.color="#2168ce";status.innerText="Please wait...";
+ try{
+  if(selectedProfilePhoto){
+   status.innerText="Uploading profile photo...";
+   const randomPart=Math.random().toString(36).slice(2,10);
+   const filePath=currentUser.id+"/profile-"+Date.now()+"-"+randomPart+".jpg";
+   const {data:uploadData,error:uploadError}=await supabaseClient.storage.from("avatars")
+    .upload(filePath,selectedProfilePhoto,{contentType:"image/jpeg",cacheControl:"3600",upsert:false});
+   if(uploadError)throw new Error("Photo upload failed: "+uploadError.message);
+   const {data:urlData}=supabaseClient.storage.from("avatars").getPublicUrl(uploadData.path);
+   if(!urlData?.publicUrl)throw new Error("Could not create photo URL.");
+   currentAvatarUrl=urlData.publicUrl;
+  }
+
+  status.innerText="Saving profile information...";
+  const profileData={
+   user_id:currentUser.id,
+   full_name:fullName,
+   father_name:document.getElementById("fatherName").value.trim(),
+   date_of_birth:document.getElementById("dob").value||null,
+   gender:document.getElementById("gender").value,
+   email:currentUser.email,
+   mobile_number:document.getElementById("mobile").value.trim(),
+   address:document.getElementById("address").value.trim(),
+   city:document.getElementById("city").value.trim(),
+   pin_code:document.getElementById("pinCode").value.trim(),
+   state:document.getElementById("state").value.trim(),
+   country:document.getElementById("country").value.trim(),
+   about_me:document.getElementById("aboutMe").value.trim(),
+   avatar_url:currentAvatarUrl,
+   updated_at:new Date().toISOString()
+  };
+  const {error}=await supabaseClient.from("profiles").upsert(profileData,{onConflict:"user_id"});
+  if(error)throw error;
+
+  profileExists=true;selectedProfilePhoto=null;document.getElementById("photoInput").value="";
+  if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null}
+  const photo=currentAvatarUrl||defaultPhoto;
+  document.getElementById("profilePreview").src=photo;
+  document.getElementById("smallProfilePhoto").src=photo;
+  document.getElementById("profileName").innerText=fullName;
+  setProfileEditMode(false);
+  status.style.color="green";status.innerText="Profile and profile photo saved successfully!";
+  allMembers=[];
+ }catch(error){
+  status.style.color="red";status.innerText="Error: "+error.message;
+ }finally{
+  btn.disabled=false;btn.innerText="💾 Save Profile";
+ }
+});
+
+// =====================================================
+// LANGUAGE AND START
+// =====================================================
+function changeLanguage(){
+ const lang=document.getElementById("language").value;
+ if(lang==="hi"){
+  document.getElementById("welcome").innerText="S-CHATE में आपका स्वागत है 🌍";
+  document.getElementById("subtitle").innerText="दुनिया भर के लोगों से जुड़ें।";
+ }else{
+  document.getElementById("welcome").innerText="Welcome to S-CHATE 🌍";
+  document.getElementById("subtitle").innerText="Connect with people around the world.";
+ }
+}
+
+loadTranslatorPreferences();
+checkSession();
+</script>
+</body>
+</html>
